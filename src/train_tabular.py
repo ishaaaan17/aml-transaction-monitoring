@@ -63,14 +63,15 @@ def prepare_data():
     return train, val, test, all_features
 
 
-def train_model(train, val, feature_cols):
+def train_model(train, val, feature_cols, best_params=None):
     scale_pos_weight = (train[TARGET_COL] == 0).sum() / (train[TARGET_COL] == 1).sum()
     print(f"\nscale_pos_weight: {scale_pos_weight:.2f}")
 
+    if best_params is None:
+        best_params = dict(n_estimators=300, max_depth=6, learning_rate=0.05)
+
     model = xgb.XGBClassifier(
-        n_estimators=300,
-        max_depth=6,
-        learning_rate=0.05,
+        **best_params,
         scale_pos_weight=scale_pos_weight,
         eval_metric="aucpr",
         early_stopping_rounds=20,
@@ -84,6 +85,7 @@ def train_model(train, val, feature_cols):
         verbose=10,
     )
     return model
+
 
 
 def evaluate(model, test, feature_cols):
@@ -114,11 +116,25 @@ def evaluate(model, test, feature_cols):
 
 
 if __name__ == "__main__":
+    import json
+
     train, val, test, feature_cols = prepare_data()
-    model = train_model(train, val, feature_cols)
+
+    # Load Optuna-tuned params if available
+    best_params_path = "../models/best_xgb_params.json"
+    if os.path.exists(best_params_path):
+        with open(best_params_path) as f:
+            best_params = json.load(f)
+        print(f"\nUsing tuned params: {best_params}")
+    else:
+        best_params = None
+        print("\nNo tuned params found, using defaults")
+
+    model = train_model(train, val, feature_cols, best_params=best_params)
     pr_auc, fpr = evaluate(model, test, feature_cols)
 
-    model.save_model("../models/xgboost_baseline.json")
-    print("\nModel saved to ../models/xgboost_baseline.json")
+    model.save_model("../models/xgboost_tuned.json")
+    print("\nModel saved to ../models/xgboost_tuned.json")
+
     
     
