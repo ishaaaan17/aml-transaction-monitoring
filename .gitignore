@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+
+# Data and models — never commit these
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# pip cache (in case it ever lands here)
+pip_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
