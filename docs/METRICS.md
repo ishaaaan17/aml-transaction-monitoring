@@ -35,13 +35,11 @@ and cost.
 | Model                  | PR-AUC | FPR @ 90% Recall |
 | ---------------------- | ------ | ---------------- |
 | Rules-based baseline   | 0.0089 | 33.28%           |
-| XGBoost (untuned)      | 0.0612 | 12.33%           |
 | XGBoost (Optuna-tuned) | 0.0830 | 11.38%           |
+| GraphSAGE (GNN)        | 0.1633 | 6.58%            |
 
-Final tuned model delivers a ~9.3x improvement in PR-AUC and a 66% reduction in
-false positive rate at matched recall, versus the rules-based baseline.
-
-Note: Optuna's best validation PR-AUC during search was 0.112, but final test-set
-PR-AUC is 0.083 — the gap reflects mild overfitting to the validation set across
-40 tuning trials, which is expected and why test-set numbers (not validation-set
-search results) are always the ones reported as final performance.
+GraphSAGE delivers the strongest result: ~18.3x improvement in PR-AUC and an
+80% reduction in false positive rate versus the rules-based baseline, and
+roughly 2x better PR-AUC with ~42% lower FPR than the tuned tabular model —
+confirming that relational/graph structure (transaction chains per account)
+captures laundering patterns not visible to flat tabular features alone.
