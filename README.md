@@ -15,6 +15,25 @@ against a rules-based baseline. Built on the IBM AML (HI-Small) synthetic datase
 GraphSAGE delivers an ~18.3x improvement in PR-AUC and an 80% reduction in
 false positive rate versus the rules-based baseline, at matched 90% recall.
 
+> ⚠️ **Re-run pending (2026-11-17 fix):** these GraphSAGE numbers were
+> measured with a train/val/test split that turned out to slice node
+> *positions* (account order), not timestamps — and one feature
+> (`account_txn_count_total`) leaked future counts. Both bugs are now
+> fixed in code (chronological split via `src/split_utils.py`, past-only
+> cumulative feature), but the model has **not yet been re-trained** on
+> the corrected pipeline, so the GraphSAGE row above will change when it
+> is. The XGBoost and rules rows were measured on a genuinely
+> chronological split and are unaffected. Updated numbers will be backed
+> by `results/metrics.json` (written automatically by the evaluation
+> code) instead of hand-typed tables.
+>
+> **Tuning, stated precisely:** XGBoost hyperparameters were tuned with a
+> 40-trial Optuna search (`src/tune_xgboost.py`). GraphSAGE was tuned
+> manually over learning rate and focal-loss alpha (Runs 3–4 in
+> `docs/EXPERIMENTS.md`); it uses SAGEConv's default **mean aggregator —
+> no aggregator comparison (mean/max/LSTM) and no Optuna search was run
+> for the GNN**, and none is claimed.
+
 See `docs/METRICS.md` for why PR-AUC (not accuracy/ROC-AUC) is the right
 metric here, and `docs/EVALUATION.md` for full evaluation details.
 
@@ -58,11 +77,14 @@ python evaluate_gnn_test.py # final test-set evaluation
 
 ## Project Structure
 
-See `PROJECT_CONTEXT.md` for the full documentation layout and rationale.
-Key docs: `docs/EDA.md` (data exploration and findings), `docs/METRICS.md`
+Key docs: `docs/DATA.md` (dataset download and placement — read this
+first), `docs/EDA.md` (data exploration and findings), `docs/METRICS.md`
 (evaluation methodology), `docs/errors/KNOWN_ISSUES.md` (bugs found and
 fixed during development), `docs/DESIGN_DECISIONS.md` (why each modeling
-choice was made).
+choice was made, including how cross-split graph edges are handled).
+After training, `src/predict.py` scores new transactions with a saved
+model, and evaluation writes its proof bundle to `results/` (see
+`results/README.md`).
 
 ## Known Limitations
 
