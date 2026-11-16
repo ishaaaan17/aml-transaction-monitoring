@@ -190,3 +190,18 @@ if __name__ == "__main__":
 
     print(f"\nBest val PR-AUC: {best_val_pr_auc:.4f}")
     print("Best model saved to ../models/graphsage_best.pt")
+
+    # Record the run so the number is backed by a file, not just console text.
+    from make_report import write_metrics
+    write_metrics(
+        "graphsage_training",
+        {
+            "best_val_pr_auc": float(best_val_pr_auc),
+            "optimizer": "Adam(lr=0.001, weight_decay=1e-4)",
+            "loss": "FocalLoss(alpha_pos=0.9, gamma=2.0)",
+            "aggregator": "mean (SAGEConv default — not tuned; see docs)",
+            "checkpoint": "models/graphsage_best.pt",
+        },
+        results_dir="../results",
+    )
+    print("Training summary written to ../results/metrics.json")

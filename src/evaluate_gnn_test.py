@@ -69,3 +69,9 @@ if __name__ == "__main__":
     print(f"At ~{recall[idx]*100:.1f}% recall (threshold={threshold_at_recall:.4f}):")
     print(f"  False Positive Rate: {fpr*100:.4f}%")
     print(f"  TP={tp}, FP={fp}, TN={tn}, FN={fn}")
+
+    # Save proof of this run: results/metrics.json + PR-curve plot
+    # (previously every reported number was only a hand-typed markdown table).
+    from make_report import report_from_predictions
+    metrics, curve = report_from_predictions("graphsage", y_true, y_prob, results_dir="../results")
+    print(f"\nSaved results bundle: ../results/metrics.json and {curve}")
