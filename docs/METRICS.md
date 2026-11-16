@@ -34,12 +34,19 @@ and cost.
 
 | Model                  | PR-AUC | FPR @ 90% Recall |
 | ---------------------- | ------ | ---------------- |
-| Rules-based baseline   | 0.0089 | 33.28%           |
-| XGBoost (Optuna-tuned) | 0.0830 | 11.38%           |
-| GraphSAGE (GNN)        | 0.1633 | 6.58%            |
+| Rules-based baseline   | 0.0072 | 30.76%           |
+| XGBoost (Optuna-tuned) | 0.0638 | 11.58%           |
+| GraphSAGE (GNN)        | 0.1994 | 11.16%           |
 
-GraphSAGE delivers the strongest result: ~18.3x improvement in PR-AUC and an
-80% reduction in false positive rate versus the rules-based baseline, and
-roughly 2x better PR-AUC with ~42% lower FPR than the tuned tabular model —
-confirming that relational/graph structure (transaction chains per account)
-captures laundering patterns not visible to flat tabular features alone.
+Measured 2026-11-17 on the corrected pipeline (chronological split by
+timestamp; past-only cumulative features). The rules baseline's FPR is at
+89.1% recall - its integer score cannot hit exactly 90%.
+
+GraphSAGE delivers the strongest result: ~27.7x the PR-AUC of the
+rules-based baseline and ~3.1x the tuned tabular model, with a ~64% lower
+false positive rate than rules at matched recall. Against tuned XGBoost,
+its FPR at the 90%-recall operating point is similar (11.16% vs 11.58%) -
+the graph model's advantage is in ranking quality (PR-AUC) across all
+thresholds, confirming that relational/graph structure (transaction
+chains per account) captures laundering patterns not visible to flat
+tabular features alone.
