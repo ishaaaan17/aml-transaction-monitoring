@@ -48,19 +48,34 @@ class GraphSAGE(nn.Module):
         return x
 
 
-def get_time_based_masks(data, num_nodes):
-    train_end = int(num_nodes * 0.70)
-    val_end = int(num_nodes * 0.85)
+def get_time_based_masks(data, num_nodes=None):
+    """Chronological masks built from each node's stored timestamp.
 
-    train_mask = torch.zeros(num_nodes, dtype=torch.bool)
-    val_mask = torch.zeros(num_nodes, dtype=torch.bool)
-    test_mask = torch.zeros(num_nodes, dtype=torch.bool)
+    Uses the same 70/85% timestamp-quantile rule as the tabular pipeline
+    (see split_utils). The previous implementation sliced node *positions*
+    (first 70% / next 15% / last 15%), but node order is account order, so
+    that "time-based" split was not time-based at all.
 
-    train_mask[:train_end] = True
-    val_mask[train_end:val_end] = True
-    test_mask[val_end:] = True
+    Raises a clear error for graphs saved before timestamps were stored —
+    rebuild the graph with graph_utils.py instead of silently falling back
+    to the positional split.
+    """
+    from split_utils import time_based_masks
 
-    return train_mask, val_mask, test_mask
+    timestamps = getattr(data, "timestamps", None)
+    if timestamps is None:
+        raise ValueError(
+            "This graph has no per-node timestamps, so a time-based split is "
+            "impossible. Rebuild it with graph_utils.py (which now stores "
+            "data.timestamps). Refusing to fall back to the old positional "
+            "split, which was not chronological."
+        )
+
+    if hasattr(timestamps, "cpu"):
+        timestamps = timestamps.cpu().numpy()
+    train_mask, val_mask, test_mask = time_based_masks(timestamps)
+    to_torch = lambda m: torch.tensor(m, dtype=torch.bool)
+    return to_torch(train_mask), to_torch(val_mask), to_torch(test_mask)
 
 
 def train_epoch(model, loader, optimizer, criterion, device, scaler):

@@ -43,7 +43,15 @@ def build_transaction_graph(df, feature_cols):
     x = torch.tensor(df[feature_cols].astype(np.float32).values, dtype=torch.float32)
     y = torch.tensor(df["Is Laundering"].values, dtype=torch.long)
 
-    data = Data(x=x, edge_index=edge_index, y=y)
+    # Carry each node's timestamp (int64 ns since epoch) so the train/val/test
+    # split can be built from TIME (split_utils.time_based_masks), not from
+    # node position — node order here is account order, not time order.
+    timestamps = torch.tensor(
+        pd.to_datetime(df["Timestamp"]).values.astype("datetime64[ns]").astype(np.int64),
+        dtype=torch.long,
+    )
+
+    data = Data(x=x, edge_index=edge_index, y=y, timestamps=timestamps)
     print(f"Graph built: {data.num_nodes} nodes, {data.num_edges} edges")
     print(f"Avg degree: {data.num_edges / data.num_nodes:.2f}")
 
