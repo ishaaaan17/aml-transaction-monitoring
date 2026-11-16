@@ -1,0 +1,23 @@
+{
+  "graphsage_training": {
+    "best_val_pr_auc": 0.20238544846522333,
+    "optimizer": "Adam(lr=0.001, weight_decay=1e-4)",
+    "loss": "FocalLoss(alpha_pos=0.9, gamma=2.0)",
+    "aggregator": "mean (SAGEConv default \u2014 not tuned; see docs)",
+    "checkpoint": "models/graphsage_best.pt"
+  },
+  "graphsage": {
+    "pr_auc": 0.19941758455034922,
+    "fpr_at_target_recall": 0.11159134061610801,
+    "target_recall": 0.9,
+    "threshold_at_target_recall": 0.16056984663009644,
+    "confusion_at_threshold": {
+      "tp": 815,
+      "fp": 84867,
+      "tn": 675649,
+      "fn": 91
+    },
+    "n_samples": 761422,
+    "n_positive": 906
+  }
+}

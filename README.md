@@ -8,31 +8,30 @@ against a rules-based baseline. Built on the IBM AML (HI-Small) synthetic datase
 
 | Model                  | PR-AUC | FPR @ 90% Recall |
 | ---------------------- | ------ | ---------------- |
-| Rules-based baseline   | 0.0089 | 33.28%           |
-| XGBoost (Optuna-tuned) | 0.0830 | 11.38%           |
-| GraphSAGE (GNN)        | 0.1633 | 6.58%            |
+| Rules-based baseline   | 0.0072 | 30.76%           |
+| XGBoost (Optuna-tuned) | 0.0638 | 11.58%           |
+| GraphSAGE (GNN)        | 0.1994 | 11.16%           |
 
-GraphSAGE delivers an ~18.3x improvement in PR-AUC and an 80% reduction in
-false positive rate versus the rules-based baseline, at matched 90% recall.
+GraphSAGE delivers an ~27.7x improvement in PR-AUC over the rules-based
+baseline (~3.1x over the tuned XGBoost model) and cuts the false positive
+rate by ~64% versus rules (30.76% -> 11.16%) at 90% recall. (The rules
+baseline's integer score cannot hit exactly 90% recall; its FPR is at
+89.1% recall.)
 
-> ⚠️ **Re-run pending (2026-11-17 fix):** these GraphSAGE numbers were
-> measured with a train/val/test split that turned out to slice node
-> *positions* (account order), not timestamps — and one feature
-> (`account_txn_count_total`) leaked future counts. Both bugs are now
-> fixed in code (chronological split via `src/split_utils.py`, past-only
-> cumulative feature), but the model has **not yet been re-trained** on
-> the corrected pipeline, so the GraphSAGE row above will change when it
-> is. The XGBoost and rules rows were measured on a genuinely
-> chronological split and are unaffected. Updated numbers will be backed
-> by `results/metrics.json` (written automatically by the evaluation
-> code) instead of hand-typed tables.
->
-> **Tuning, stated precisely:** XGBoost hyperparameters were tuned with a
-> 40-trial Optuna search (`src/tune_xgboost.py`). GraphSAGE was tuned
-> manually over learning rate and focal-loss alpha (Runs 3–4 in
-> `docs/EXPERIMENTS.md`); it uses SAGEConv's default **mean aggregator —
-> no aggregator comparison (mean/max/LSTM) and no Optuna search was run
-> for the GNN**, and none is claimed.
+All numbers above were measured on the corrected pipeline — a genuinely
+chronological split by timestamp (`src/split_utils.py`) and past-only
+cumulative features — in a full re-run on 2026-11-17. An earlier version
+of this table was measured with a positional (account-order) split and a
+feature that leaked future counts; those figures are superseded. The
+GraphSAGE figures are written automatically to `results/metrics.json` by
+the evaluation code (best validation PR-AUC during training: 0.2024).
+
+**Tuning, stated precisely:** XGBoost hyperparameters were tuned with a
+40-trial Optuna search (`src/tune_xgboost.py`). GraphSAGE was tuned
+manually over learning rate and focal-loss alpha (Runs 3-4 in
+`docs/EXPERIMENTS.md`); it uses SAGEConv's default **mean aggregator -
+no aggregator comparison (mean/max/LSTM) and no Optuna search was run
+for the GNN**, and none is claimed.
 
 See `docs/METRICS.md` for why PR-AUC (not accuracy/ROC-AUC) is the right
 metric here, and `docs/EVALUATION.md` for full evaluation details.
