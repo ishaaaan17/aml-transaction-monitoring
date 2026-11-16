@@ -56,12 +56,25 @@ def add_velocity_features(df, windows_hours=(24, 168)):
 
 
 def add_account_frequency_features(df):
-    """Degree-proxy: total transactions per (Account, From Bank)."""
+    """Degree-proxy: how many transactions this account has made UP TO AND
+    INCLUDING this one (past-only cumulative count).
+
+    The previous version used value_counts() over the ENTIRE dataframe, so
+    every row encoded that account's future/test-period transaction count —
+    lookahead leakage, and build_features() runs before the split. The
+    cumulative version only ever looks backward in time, so a row's feature
+    cannot change if future rows change. Column name is kept for
+    compatibility with the saved feature lists; read it as
+    "account_txn_count_so_far".
+    """
     df = df.copy()
     if "account_key" not in df.columns:
         df["account_key"] = df["Account"].astype(str) + "_" + df["From Bank"].astype(str)
-    account_counts = df["account_key"].value_counts()
-    df["account_txn_count_total"] = df["account_key"].map(account_counts).astype("int32")
+    # cumcount within each account in timestamp order, aligned back to the
+    # original row order via the index.
+    order = df.sort_values(["account_key", "Timestamp"], kind="mergesort").index
+    counts = df.loc[order].groupby("account_key").cumcount() + 1
+    df["account_txn_count_total"] = counts.reindex(df.index).astype("int32")
     return df
 
 

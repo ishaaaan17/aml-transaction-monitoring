@@ -10,18 +10,24 @@ from data_utils import load_transactions
 from feature_engineering import build_features
 
 
-def rules_based_score(df):
+def rules_based_score(df, amount_threshold=None):
     """
     Simple threshold rules mimicking a legacy AML system, based on EDA findings:
     - ACH payment format (86.6% of laundering vs 11.8% of normal)
     - Cross-bank transaction (98% of laundering vs 86.4% of normal)
     - High transaction amount (top 25th percentile)
     Score = number of rules triggered (0-3), used as a ranking score for PR-AUC.
+
+    amount_threshold should be computed on the TRAIN period only and passed
+    in. If it is None it is derived from df itself — acceptable only when df
+    IS the training data; deriving it from the test set (the old behaviour
+    in __main__) leaks the test distribution into the baseline.
     """
     score = np.zeros(len(df))
     score += (df["Payment Format"] == "ACH").astype(int)
     score += (df["From Bank"] != df["To Bank"]).astype(int)
-    amount_threshold = df["Amount Paid"].quantile(0.75)
+    if amount_threshold is None:
+        amount_threshold = df["Amount Paid"].quantile(0.75)
     score += (df["Amount Paid"] >= amount_threshold).astype(int)
     return score
 
@@ -32,11 +38,16 @@ if __name__ == "__main__":
 
     # Use same test period as the tabular model for fair comparison
     df = df.sort_values("Timestamp")
+    train_end = df["Timestamp"].quantile(0.70)
     val_end = df["Timestamp"].quantile(0.85)
     test = df[df["Timestamp"] > val_end]
 
+    # Amount threshold from the TRAIN period only — never from the test set.
+    train = df[df["Timestamp"] <= train_end]
+    amount_threshold = train["Amount Paid"].quantile(0.75)
+
     y_true = test["Is Laundering"]
-    y_score = rules_based_score(test)
+    y_score = rules_based_score(test, amount_threshold=amount_threshold)
 
     pr_auc = average_precision_score(y_true, y_score)
     print(f"PR-AUC (Average Precision): {pr_auc:.4f}")
