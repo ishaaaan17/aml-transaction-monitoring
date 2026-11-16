@@ -1,3 +1,26 @@
+# ── PyTorch / PyG wheel indexes (README refers to these comments) ──────────
+# The +cu126 / +pt212cu126 wheels below are NOT on plain PyPI. Install with
+# the matching indexes, in this order:
+#
+#   GPU (CUDA 12.6, the setup this project was developed on):
+#     pip install torch==2.12.1+cu126 torchvision torchaudio \
+#         --index-url https://download.pytorch.org/whl/cu126
+#     pip install torch-geometric==2.8.0
+#     pip install pyg-lib==0.7.0+pt212cu126 torch-scatter==2.1.2+pt212cu126 \
+#         torch-sparse==0.6.18+pt212cu126 \
+#         -f https://data.pyg.org/whl/torch-2.12.1+cu126.html
+#     pip install pandas numpy scikit-learn xgboost lightgbm optuna \
+#         imbalanced-learn matplotlib seaborn plotly jupyter
+#
+#   CPU-only (enough to run the unit tests and the tabular pipeline):
+#     pip install torch torchvision torchaudio \
+#         --index-url https://download.pytorch.org/whl/cpu
+#     pip install torch-geometric
+#     pip install -r requirements.txt   # skip the pyg-lib/scatter/sparse lines
+#
+# A bare `pip install -r requirements.txt` will fail on the cu126 lines
+# without the index flags above — that is expected, not a broken file.
+# ─────────────────────────────────────────────────────────────────────────────
 torch==2.12.1+cu126
 torchvision
 torchaudio
