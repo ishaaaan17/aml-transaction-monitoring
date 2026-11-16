@@ -13,7 +13,16 @@ from train_tabular import prepare_data, FEATURE_COLS
 train, val, test, feature_cols = prepare_data()
 
 model = xgb.XGBClassifier()
-model.load_model("../models/xgboost_baseline.json")
+# train_tabular.py saves the final model as xgboost_tuned.json — the old
+# path here (xgboost_baseline.json) is a file nothing in this repo produces,
+# so this script crashed even after a full successful training run.
+_model_path = "../models/xgboost_tuned.json"
+if not os.path.exists(_model_path):
+    raise SystemExit(
+        f"Model file not found: {_model_path}\n"
+        "Run train_tabular.py first — it saves the trained model there."
+    )
+model.load_model(_model_path)
 
 importances = pd.Series(model.feature_importances_, index=feature_cols)
 importances = importances.sort_values(ascending=False)
